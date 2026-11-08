@@ -72,3 +72,15 @@ jobs:
           HOUSES: ${{ inputs.houses }}
           DISPLAY: ":99"
         run: python worker.py
+      - name: Save report backup (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-${{ inputs.slot }}-${{ github.run_id }}
+          path: |
+            /tmp/report.jsonl
+            /tmp/botout.log
+            state_v2_*.json
+            run_new_1.log
+          if-no-files-found: ignore
+          retention-days: 14
