@@ -57,7 +57,7 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
           echo "LIVE_URL=$LIVE_URL"
           echo "LIVE_PASS=$VNC_PASS"
-          python publish.py
+          LIVE_URL="$LIVE_URL" LIVE_PASS="$VNC_PASS" python publish.py
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Browser
