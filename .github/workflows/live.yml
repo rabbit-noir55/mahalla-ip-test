@@ -7,7 +7,7 @@ on:
         required: false
         default: "15"
 permissions:
-  contents: read
+  contents: write
   actions: write
 jobs:
   live:
@@ -57,9 +57,7 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
           echo "LIVE_URL=$LIVE_URL"
           echo "LIVE_PASS=$VNC_PASS"
-          gh variable set LIVE_URL --body "$LIVE_URL" || true
-          gh variable set LIVE_PASS --body "$VNC_PASS" || true
-          gh variable set LIVE_RUN --body "$GITHUB_RUN_ID" || true
+          python publish.py
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Browser
@@ -72,4 +70,5 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh variable set LIVE_URL --body "off" || true
+          LIVE_URL: "off"
+        run: python publish.py
