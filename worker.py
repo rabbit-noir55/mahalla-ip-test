@@ -227,6 +227,8 @@ def main():
         })
         cmd = [sys.executable, "mahalla_v2.py", "--street", STREET, "--slot", "1",
                "--cdp", "http://127.0.0.1:9222", "--continue-on-new"]
+        if os.environ.get("RESTART") == "1":
+            cmd.append("--restart")
         if HOUSES and HOUSES != "0":
             cmd += ["--houses", HOUSES]
         print("bot ishga tushdi:", " ".join(cmd[1:]), flush=True)
