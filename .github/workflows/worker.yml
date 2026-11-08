@@ -27,11 +27,39 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install Playwright
+      - name: Install browser + VNC
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb x11vnc novnc websockify > /tmp/apt.log 2>&1
           python -m pip install --upgrade pip -q
-          pip install playwright openpyxl websocket-client -q
+          pip install playwright openpyxl -q
           python -m playwright install --with-deps chromium > /tmp/pw.log 2>&1
+      - name: Start desktop + VNC tunnel
+        run: |
+          set -e
+          Xvfb :99 -screen 0 1440x900x24 > /tmp/xvfb.log 2>&1 &
+          sleep 2
+          VNC_PASS="$(head -c 64 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 8)"
+          mkdir -p ~/.vnc
+          x11vnc -storepasswd "$VNC_PASS" ~/.vnc/passwd > /dev/null 2>&1
+          x11vnc -display :99 -forever -shared -rfbauth ~/.vnc/passwd \
+                 -rfbport 5900 -bg -o /tmp/x11vnc.log
+          websockify --web=/usr/share/novnc 6080 localhost:5900 > /tmp/ws.log 2>&1 &
+          curl -sL -o /tmp/cloudflared \
+            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x /tmp/cloudflared
+          /tmp/cloudflared tunnel --url http://localhost:6080 --no-autoupdate \
+            > /tmp/cf.log 2>&1 &
+          URL=""
+          for i in $(seq 1 45); do
+            URL=$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' /tmp/cf.log | head -1 || true)
+            [ -n "$URL" ] && break
+            sleep 2
+          done
+          VNC_URL="$URL/vnc.html?autoconnect=true&resize=scale&view_only=1&password=$VNC_PASS"
+          echo "VNC_URL=$VNC_URL" >> $GITHUB_ENV
+          echo "VNC_PASS=$VNC_PASS" >> $GITHUB_ENV
+          echo "VNC tayyor: $URL"
       - name: Work
         env:
           AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
@@ -42,5 +70,5 @@ jobs:
           BRIDGE_USER: ${{ inputs.bridge_user }}
           BRIDGE_PASS: ${{ inputs.bridge_pass }}
           HOUSES: ${{ inputs.houses }}
-          HEADLESS: "1"
+          DISPLAY: ":99"
         run: python worker.py
