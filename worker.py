@@ -165,7 +165,7 @@ def main():
             r = ctx.request.get("https://api.online-mahalla.uz/auth/user_info",
                                 headers={"authorization": "Bearer " + TOKEN}, timeout=30000)
             print("user_info:", r.status)
-            b.close()
+            # MUHIM: b.close() CDP brauzerni o'chiradi — ulanish ochiq qolishi kerak
         except Exception as e:
             print("browser tayyorlash xatosi:", str(e)[:200])
 
@@ -184,15 +184,26 @@ def main():
         th = threading.Thread(target=heartbeat, daemon=True)
         th.start()
         out = open("/tmp/botout.log", "a", encoding="utf-8")
+        t0 = time.time()
         rc = subprocess.run(cmd, cwd=HERE, env=env, stdout=out,
                             stderr=subprocess.STDOUT).returncode
+        dur = time.time() - t0
         out.close()
         STOP.set()
         th.join(timeout=15)
-        print("bot rc:", rc)
+        print("bot rc:", rc, "davomiylik:", round(dur, 1), "s")
 
         flush_report()
         push_log()
+        if dur < 10 and os.path.exists("/tmp/botout.log"):
+            with open("/tmp/botout.log", "rb") as f:
+                err = f.read()[-8000:]
+            q = urllib.parse.urlencode({"slot": SLOT, "street": STREET, "name": SNAME})
+            try:
+                post("/log?" + q, err)
+            except Exception:
+                pass
+            print("bot juda tez to'xtadi — log lokal bridge'ga yuborildi")
 
         if os.path.exists(STATE):
             with open(STATE, "rb") as f:
