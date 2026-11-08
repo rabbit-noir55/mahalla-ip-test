@@ -198,10 +198,21 @@ def main():
         th.start()
         out = open("/tmp/botout.log", "a", encoding="utf-8")
         t0 = time.time()
-        rc = subprocess.run(cmd, cwd=HERE, env=env, stdout=out,
-                            stderr=subprocess.STDOUT).returncode
+        rc = 0
+        for attempt in range(1, 6):
+            out = open("/tmp/botout.log", "a", encoding="utf-8")
+            rc = subprocess.run(cmd, cwd=HERE, env=env, stdout=out,
+                                stderr=subprocess.STDOUT).returncode
+            out.close()
+            try:
+                txt = open(RUNLOG, encoding="utf-8", errors="replace").read()
+            except Exception:
+                txt = ""
+            if "TUGADI:" in txt or "LOGIN KERAK" in txt:
+                break
+            print(f"bot to'xtadi (urinish {attempt}/5) — 10 s dan keyin davom", flush=True)
+            STOP.wait(10)
         dur = time.time() - t0
-        out.close()
         STOP.set()
         th.join(timeout=15)
         print("bot rc:", rc, "davomiylik:", round(dur, 1), "s")
