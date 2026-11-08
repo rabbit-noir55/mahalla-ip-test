@@ -17,4 +17,5 @@ jobs:
       - name: Run smoke test
         env:
           AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          AUTH_USER: ${{ secrets.AUTH_USER }}
         run: python smoke.py
