@@ -8,6 +8,7 @@ import re
 from playwright.sync_api import sync_playwright
 
 TOKEN = os.environ["AUTH_TOKEN"]
+AUTH_USER = os.environ.get("AUTH_USER", '{"id":1}')
 SITE = "https://online-mahalla.uz"
 URL = (SITE + "/tables/survey_homes_street?obl_id=35&area_id=3509"
        "&district_id=3509040&street_id=350901168&_mid=3548")
@@ -46,7 +47,7 @@ def main():
             "try { localStorage.setItem('auth_token', %r);"
             " localStorage.setItem('refresh_token', %r);"
             " localStorage.setItem('auth_user', %r); } catch (e) {}"
-            % (TOKEN, TOKEN, '{"id":1}')
+            % (TOKEN, TOKEN, AUTH_USER)
         )
         ctx.add_init_script(PLATON_SHIM)
         pg = ctx.new_page()
