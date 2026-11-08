@@ -104,6 +104,12 @@ def heartbeat():
     while not STOP.is_set():
         flush_report()
         push_log()
+        try:
+            if os.path.exists(STATE):
+                with open(STATE, "rb") as f:
+                    post("/state?street=" + STREET, f.read(), timeout=30)
+        except Exception:
+            pass
         STOP.wait(20)
 
 
