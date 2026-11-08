@@ -21,6 +21,8 @@ STREET = os.environ["STREET_ID"]
 SNAME = os.environ.get("STREET_NAME", STREET)
 SLOT = os.environ.get("SLOT", "GH")
 TOKEN = os.environ["AUTH_TOKEN"]
+AUTH_USER = os.environ.get("AUTH_USER", '{"id":1}')
+AUTH_REFRESH = os.environ.get("AUTH_REFRESH") or TOKEN
 HOUSES = os.environ.get("HOUSES", "0")
 
 BASE = "/tmp/base.xlsx"
@@ -188,11 +190,11 @@ def main():
             pg = ctx.new_page()
             pg.goto("https://online-mahalla.uz/", wait_until="domcontentloaded", timeout=90000)
             pg.evaluate(
-                """(t) => {
-                     localStorage.setItem('auth_token', t);
-                     localStorage.setItem('refresh_token', t);
-                     localStorage.setItem('auth_user', '{"id":1}');
-                   }""", TOKEN)
+                """(d) => {
+                     localStorage.setItem('auth_token', d.t);
+                     localStorage.setItem('refresh_token', d.r);
+                     localStorage.setItem('auth_user', d.u);
+                   }""", {"t": TOKEN, "r": AUTH_REFRESH, "u": AUTH_USER})
             # SPA token bilan qayta yuklanishi kerak — aks holda login sahifasida qoladi
             try:
                 pg.reload(wait_until="domcontentloaded", timeout=60000)
