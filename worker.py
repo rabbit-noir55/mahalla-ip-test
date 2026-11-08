@@ -100,10 +100,26 @@ def push_log():
         print("log yuborilmadi:", str(e)[:120], flush=True)
 
 
+RUN_ID = os.environ.get("GITHUB_RUN_ID", "")
+
+
+def publish_vnc():
+    url = os.environ.get("VNC_URL", "")
+    if not url:
+        return
+    try:
+        post("/vnc?slot=" + SLOT,
+             json.dumps({"url": url, "pass": os.environ.get("VNC_PASS", ""),
+                         "run": RUN_ID}))
+    except Exception:
+        pass
+
+
 def heartbeat():
     while not STOP.is_set():
         flush_report()
         push_log()
+        publish_vnc()
         try:
             if os.path.exists(STATE):
                 with open(STATE, "rb") as f:
@@ -133,12 +149,8 @@ def main():
     print("street:", STREET, SNAME, "slot:", SLOT)
     vnc_url = os.environ.get("VNC_URL", "")
     if vnc_url:
-        try:
-            post("/vnc?slot=" + SLOT,
-                 json.dumps({"url": vnc_url, "pass": os.environ.get("VNC_PASS", "")}))
-            print("VNC e'lon qilindi", flush=True)
-        except Exception as e:
-            print("VNC e'lon xatosi:", str(e)[:120])
+        publish_vnc()
+        print("VNC e'lon qilindi", flush=True)
     print("base yuklanmoqda:", get("/base.xlsx", BASE))
     print("iib yuklanmoqda:", get("/iib.xlsx", IIB, timeout=1200))
     try:
@@ -253,7 +265,8 @@ def main():
         print(f"WORKER_DONE ok={ok} fail={fail} skip={skip}", flush=True)
         if vnc_url:
             try:
-                post("/vnc?slot=" + SLOT, json.dumps({"url": "off", "pass": ""}))
+                post("/vnc?slot=" + SLOT,
+                     json.dumps({"url": "off", "pass": "", "run": RUN_ID}))
             except Exception:
                 pass
         proc.terminate()
