@@ -1,0 +1,46 @@
+name: worker
+on:
+  workflow_dispatch:
+    inputs:
+      street:
+        required: true
+      name:
+        required: true
+      slot:
+        required: true
+      bridge_url:
+        required: true
+      bridge_user:
+        required: true
+      bridge_pass:
+        required: true
+      houses:
+        default: "0"
+permissions:
+  contents: read
+jobs:
+  work:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip -q
+          pip install playwright openpyxl -q
+          python -m playwright install --with-deps chromium > /tmp/pw.log 2>&1
+      - name: Work
+        env:
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          STREET_ID: ${{ inputs.street }}
+          STREET_NAME: ${{ inputs.name }}
+          SLOT: ${{ inputs.slot }}
+          BRIDGE_URL: ${{ inputs.bridge_url }}
+          BRIDGE_USER: ${{ inputs.bridge_user }}
+          BRIDGE_PASS: ${{ inputs.bridge_pass }}
+          HOUSES: ${{ inputs.houses }}
+          HEADLESS: "1"
+        run: python worker.py
