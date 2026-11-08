@@ -824,14 +824,18 @@ def main():
                 stats["fail"] += 1
                 res, detail = "ok", ""
             if res == "new":
-                log("=" * 64)
-                log(f"!!! YANGI HOLAT: {detail}")
-                log("Bot to'xtadi. Tekshirib, --continue-on-new bilan davom etish mumkin.")
-                save_state(street_id, {"processed": sorted(processed),
-                                       "added": sorted(site_pins_all),
-                                       "last": idx + 1})
-                rl.flush()
-                return
+                if STRICT:
+                    log("=" * 64)
+                    log(f"!!! YANGI HOLAT: {detail}")
+                    log("Bot to'xtadi. Tekshirib, --continue-on-new bilan davom etish mumkin.")
+                    save_state(street_id, {"processed": sorted(processed),
+                                           "added": sorted(site_pins_all),
+                                           "last": idx + 1})
+                    rl.flush()
+                    return
+                log(f"!!! YANGI HOLAT (davom etildi): {detail}")
+                rl.log_fail(h["fio"], "", "", "", h["cad"],
+                            f"Yangi holat: {detail}", street=street_name)
             processed.add(h["cad"])
             st = {"processed": sorted(processed), "added": sorted(site_pins_all),
                   "last": idx + 1}
