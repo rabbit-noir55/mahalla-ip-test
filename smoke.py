@@ -43,7 +43,10 @@ def main():
         b = p.chromium.launch(headless=True)
         ctx = b.new_context(viewport={"width": 1440, "height": 900})
         ctx.add_init_script(
-            "try { localStorage.setItem('auth_token', %r); } catch (e) {}" % TOKEN
+            "try { localStorage.setItem('auth_token', %r);"
+            " localStorage.setItem('refresh_token', %r);"
+            " localStorage.setItem('auth_user', %r); } catch (e) {}"
+            % (TOKEN, TOKEN, '{"id":1}')
         )
         ctx.add_init_script(PLATON_SHIM)
         pg = ctx.new_page()
