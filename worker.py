@@ -237,6 +237,12 @@ def main():
 
         flush_report()
         push_log()
+        for _ in range(6):
+            flush_report()
+            if (not os.path.exists(REPORT)
+                    or OFFSET >= os.path.getsize(REPORT)):
+                break
+            time.sleep(5)
         if dur < 10 and os.path.exists("/tmp/botout.log"):
             with open("/tmp/botout.log", "rb") as f:
                 err = f.read()[-8000:]
