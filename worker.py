@@ -13,11 +13,6 @@ import time
 import urllib.parse
 import urllib.request
 
-try:
-    import websocket  # websocket-client
-except Exception:
-    websocket = None
-
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRIDGE = os.environ["BRIDGE_URL"].rstrip("/")
 BUSER = os.environ["BRIDGE_USER"]
@@ -113,42 +108,8 @@ def heartbeat():
 
 
 def screenshots():
-    """Har 3 s da brauzer ekranini bridge'ga yuboradi (jonli ko'rish)."""
-    if websocket is None:
-        print("websocket-client yo'q — jonli ekran o'chirilgan", flush=True)
-        return
-    while not STOP.is_set():
-        ws = None
-        try:
-            info = json.load(urllib.request.urlopen("http://127.0.0.1:9222/json/list", timeout=5))
-            target = next((x for x in info if x.get("type") == "page"
-                           and "online-mahalla" in (x.get("url") or "")), None)
-            if not target:
-                STOP.wait(3)
-                continue
-            ws = websocket.create_connection(target["webSocketDebuggerUrl"], timeout=10)
-            while not STOP.is_set():
-                ws.send(json.dumps({"id": 1, "method": "Page.captureScreenshot",
-                                    "params": {"format": "jpeg", "quality": 55}}))
-                while True:
-                    msg = json.loads(ws.recv())
-                    if msg.get("id") == 1:
-                        break
-                data = (msg.get("result") or {}).get("data")
-                if data:
-                    img = base64.b64decode(data)
-                    if len(img) > 1000:
-                        post("/shot?slot=" + SLOT, img, timeout=30)
-                STOP.wait(3)
-        except Exception as e:
-            print("screenshot xatosi:", str(e)[:120], flush=True)
-            STOP.wait(4)
-        finally:
-            try:
-                if ws:
-                    ws.close()
-            except Exception:
-                pass
+    """Eski screenshot oqimi — endi VNC ishlatiladi (o'chirilgan)."""
+    return
 
 
 def wait_cdp(url, seconds=40):
@@ -164,6 +125,14 @@ def wait_cdp(url, seconds=40):
 def main():
     print("bridge:", BRIDGE)
     print("street:", STREET, SNAME, "slot:", SLOT)
+    vnc_url = os.environ.get("VNC_URL", "")
+    if vnc_url:
+        try:
+            post("/vnc?slot=" + SLOT,
+                 json.dumps({"url": vnc_url, "pass": os.environ.get("VNC_PASS", "")}))
+            print("VNC e'lon qilindi", flush=True)
+        except Exception as e:
+            print("VNC e'lon xatosi:", str(e)[:120])
     print("base yuklanmoqda:", get("/base.xlsx", BASE))
     print("iib yuklanmoqda:", get("/iib.xlsx", IIB, timeout=1200))
     try:
@@ -227,8 +196,6 @@ def main():
 
         th = threading.Thread(target=heartbeat, daemon=True)
         th.start()
-        shot = threading.Thread(target=screenshots, daemon=True)
-        shot.start()
         out = open("/tmp/botout.log", "a", encoding="utf-8")
         t0 = time.time()
         rc = subprocess.run(cmd, cwd=HERE, env=env, stdout=out,
@@ -267,6 +234,11 @@ def main():
                 else:
                     fail += 1
         print(f"WORKER_DONE ok={ok} fail={fail} skip={skip}", flush=True)
+        if vnc_url:
+            try:
+                post("/vnc?slot=" + SLOT, json.dumps({"url": "off", "pass": ""}))
+            except Exception:
+                pass
         proc.terminate()
         return 0
 
