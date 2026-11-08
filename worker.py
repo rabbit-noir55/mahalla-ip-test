@@ -147,7 +147,7 @@ def wait_cdp(url, seconds=40):
 
 
 def main():
-    print("bridge:", BRIDGE)
+    print("bridge: ulanmoqda…")
     print("street:", STREET, SNAME, "slot:", SLOT)
     vnc_url = os.environ.get("VNC_URL", "")
     if vnc_url:
