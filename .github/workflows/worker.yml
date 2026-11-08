@@ -63,6 +63,7 @@ jobs:
       - name: Work
         env:
           AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          AUTH_USER: ${{ secrets.AUTH_USER }}
           STREET_ID: ${{ inputs.street }}
           STREET_NAME: ${{ inputs.name }}
           SLOT: ${{ inputs.slot }}
