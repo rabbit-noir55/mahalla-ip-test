@@ -193,9 +193,26 @@ def main():
                      localStorage.setItem('refresh_token', t);
                      localStorage.setItem('auth_user', '{"id":1}');
                    }""", TOKEN)
+            # SPA token bilan qayta yuklanishi kerak — aks holda login sahifasida qoladi
+            try:
+                pg.reload(wait_until="domcontentloaded", timeout=60000)
+            except Exception:
+                pass
+            pg.wait_for_timeout(3000)
+            if "/login" in pg.url:
+                try:
+                    pg.goto("https://online-mahalla.uz/", wait_until="domcontentloaded", timeout=60000)
+                    pg.wait_for_timeout(3000)
+                except Exception:
+                    pass
+            print("start page:", pg.url.split("?")[0], flush=True)
             r = ctx.request.get("https://api.online-mahalla.uz/auth/user_info",
                                 headers={"authorization": "Bearer " + TOKEN}, timeout=30000)
-            print("user_info:", r.status)
+            print("user_info:", r.status, flush=True)
+            if r.status != 200:
+                print("TOKEN RAD ETILDI — bot ishga tushirilmaydi", flush=True)
+                proc.terminate()
+                return 3
             # MUHIM: b.close() CDP brauzerni o'chiradi — ulanish ochiq qolishi kerak
         except Exception as e:
             print("browser tayyorlash xatosi:", str(e)[:200])
