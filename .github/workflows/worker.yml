@@ -16,6 +16,8 @@ on:
         required: true
       houses:
         default: "0"
+      restart:
+        default: "0"
 permissions:
   contents: read
 jobs:
@@ -71,6 +73,7 @@ jobs:
           BRIDGE_USER: ${{ inputs.bridge_user }}
           BRIDGE_PASS: ${{ inputs.bridge_pass }}
           HOUSES: ${{ inputs.houses }}
+          RESTART: ${{ inputs.restart }}
           DISPLAY: ":99"
         run: python worker.py
       - name: Save report backup (artifact)
